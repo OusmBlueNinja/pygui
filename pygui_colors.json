@@ -1,0 +1,18 @@
+{
+    "label_colors": {
+        "default": [255, 255, 255],
+        "header": [70, 70, 70],
+        "highlight": [255, 0, 0],
+        "background": [50, 50, 50],
+        "button_hover": [100, 100, 100]
+    },
+    "gui_color": {
+        "background":[70,70,70],
+        "title": [100,100,100],
+        "title_text":[255,255,255]
+    },
+    "slider_color": {
+        "background":[50,200,50],
+        "knob_color": [255,255,255]
+    }
+}

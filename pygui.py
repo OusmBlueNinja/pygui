@@ -1,7 +1,26 @@
-import pygame, math
+import pygame, math, os, json
+
+# Load colors from the JSON file
+def _load_colors(file_path='pygui_colors.json'):
+    """Load the colors from the JSON configuration file."""
+    colors = {"label_colors":{},"gui_color":{}, "slider_color":{}}
+    if not os.path.exists(file_path):
+        print(f"[pygui] Color configuration file '{file_path}' not found.")
+    else:
+        with open(file_path, 'r') as file:
+            colors = json.load(file)
+    return colors
+
+# Load the colors at the start of the program
+color = {"label_colors":{},"gui_color":{}, "slider_color":{}} # Default colors
 
 def init_pygui():
     """Initialize Pygame."""
+    global windowsId, colors
+    
+    colors = _load_colors()
+    
+    windowsId = 0
     pygame.init()
 
 def quit_pygui():
@@ -16,6 +35,7 @@ class Button:
         self.rect = pygame.Rect(pos, size)
         self.is_clicked = False
         self.mouse_released = True  # Track mouse state internally
+        self.type = Button
 
     def call(self, screen):
         """Draw the button and check if it's clicked."""
@@ -61,6 +81,8 @@ class Checkbox:
         self.rect = pygame.Rect(pos, (20, 20))
         self.checked = checked
         self.mouse_released = True  # Track mouse state internally
+        
+        self.type = Checkbox
 
     def call(self, screen):
         """Draw the checkbox and toggle its state if clicked."""
@@ -141,6 +163,7 @@ class Slider:
         self.min_value = min_value  # Minimum value of the slider
         self.max_value = max_value  # Maximum value of the slider
         self.value = start_value  # Current value of the slider
+        self.type = Slider
 
         # Calculate knob position and size
         self.knob_width = 10  # Width of the knob
@@ -148,6 +171,9 @@ class Slider:
         self.knob_rect = pygame.Rect(pos[0], pos[1], self.knob_width, size[1])  # Knob rectangle
 
         self.dragging = False  # Track whether the knob is being dragged
+        
+        self.knob_color = colors['slider_color'].get("knob_color", (255,255,255))
+        self.backround_color = colors['slider_color'].get("background", (150,150,150))
 
         # Update the knob position based on the initial value
         self.update_knob_position()
@@ -162,12 +188,14 @@ class Slider:
         """Draw the slider and handle user interaction."""
         mouse_pos = pygame.mouse.get_pos()  # Get the current mouse position
         mouse_click = pygame.mouse.get_pressed()[0]  # Check if the mouse button is pressed
-        self.move()
+        
         # Draw the slider track
-        pygame.draw.rect(screen, (150, 150, 150), self.rect)
+        pygame.draw.rect(screen, self.backround_color, self.rect)
 
         # Draw the knob
-        pygame.draw.rect(screen, (255, 255, 255), self.knob_rect)
+        pygame.draw.rect(screen, self.knob_color, self.knob_rect)
+        
+        self.move()
 
         # Handle dragging logic
         if self.dragging:
@@ -201,24 +229,24 @@ class Slider:
         self.update_knob_position()
 
 
-
-
-
-
-
 class Knob:
     def __init__(self, center, radius, min_angle=-135, max_angle=135, start_angle=0, sensitivity=1):
-        self.center = center  # Center of the knob (x, y)
+        self.pos = center  # Center of the knob (x, y)
         self.radius = radius  # Radius of the knob
         self.min_angle = min_angle  # Minimum rotation angle (in degrees)
         self.max_angle = max_angle  # Maximum rotation angle (in degrees)
         self.angle = start_angle  # Initial angle (in degrees)
+        self.sensitivity = sensitivity  # Sensitivity of knob rotation
+
+        # Create a rect based on the position and radius of the knob
+        self.rect = pygame.Rect(0, 0, self.radius * 2, self.radius * 2)
+        self.rect.center = (self.pos[0] - self.radius, self.pos[1] - self.radius)  # Set the center of the rect to the knob's center
 
         self.dragging = False  # Track if the knob is being dragged
         self.last_mouse_y = None  # To track the previous mouse y-position
-        self.sensitivity = sensitivity
+        self.type = Knob
 
-    def draw(self, screen):
+    def call(self, screen):
         """Draw the knob and handle rotation."""
         # Get the current mouse position and mouse click status
         mouse_pos = pygame.mouse.get_pos()
@@ -239,88 +267,135 @@ class Knob:
 
             self.last_mouse_y = mouse_pos[1]  # Update the last Y position of the mouse
 
-        elif pygame.Rect(self.center[0] - self.radius, self.center[1] - self.radius, self.radius * 2, self.radius * 2).collidepoint(mouse_pos) and mouse_click:
+        # Check for initial click to start dragging
+        elif self.rect.collidepoint(mouse_pos) and mouse_click:
             self.dragging = True
             self.last_mouse_y = mouse_pos[1]  # Start dragging, save the initial mouse Y position
 
         # Draw the knob (as a circle)
-        pygame.draw.circle(screen, (255, 255, 255), self.center, self.radius, 2)
+        pygame.draw.circle(screen, (255, 255, 255), self.rect.center, self.radius, 2)
+
+        # Draw the rect around the knob for debugging purposes
+        #pygame.draw.rect(screen, (0, 255, 255), self.rect, 1)
 
         # Draw a "needle" to indicate the current angle
         needle_length = self.radius - 10
         needle_angle_rad = math.radians(self.angle)
-        needle_x = self.center[0] + needle_length * math.cos(needle_angle_rad)
-        needle_y = self.center[1] - needle_length * math.sin(needle_angle_rad)
-        pygame.draw.line(screen, (255, 0, 0), self.center, (needle_x, needle_y), 3)
+        needle_x = self.rect.center[0] + needle_length * math.cos(needle_angle_rad)
+        needle_y = self.rect.center[1] - needle_length * math.sin(needle_angle_rad)
+        pygame.draw.line(screen, (255, 0, 0), self.rect.center, (needle_x, needle_y), 3)
 
         return self.angle
+
+    def move(self, new_pos):
+        """Move the knob to a new position."""
+        self.pos = new_pos  # Update the position
+        # Update the rect's center to match the new position of the knob
+        self.rect.center = (self.pos[0] - self.radius, self.pos[1] - self.radius)
+
+        
+        
+
         
         
         
 class Window:
-    def __init__(self, title, pos, size):
+    focused_window = None  # Class-level variable to track the currently focused window
+
+    def __init__(self, title:str, pos:tuple|pygame.Vector2, size:int, elements=None, fixed=False):
+        global windowsId
         self.title = title
         self.pos = pos
         self.size = size
         self.rect = pygame.Rect(pos, size)
         self.is_dragging = False
         self.drag_offset = (0, 0)
-
+        self.elements = elements if elements else []  # Store elements as part of the window
         self.header_height = 30  # Header for dragging the window
+        
+        self.fixed = fixed
+        
+        self.id = windowsId 
+        windowsId += 1
+        
+        for element in self.elements:
+            element.rect.topleft = (self.pos[0] + element.pos[0], self.pos[1] + element.pos[1])
+            
+        self.title_text_color = colors['gui_color'].get("title_text", (255,255,255))
+        self.backround_color = colors['gui_color'].get("background", (70,70,70))
+        self.title_color = colors['gui_color'].get("title", (100,100,100))
 
     def draw(self, screen):
         """Draw the window and allow it to be dragged."""
         mouse_pos = pygame.mouse.get_pos()
         mouse_click = pygame.mouse.get_pressed()[0]
+        
+        
+        if not self.fixed:
+            # Check if this window is clicked and should become the focused window
+            if self.rect.collidepoint(mouse_pos) and mouse_click and Window.focused_window is None:
+                Window.focused_window = self  # Set this window as the focused window
+    
+            # Handle dragging if this window is the focused one
+            if Window.focused_window == self:
+                if self.is_dragging:
+                    if mouse_click:
+                        self.pos = (mouse_pos[0] - self.drag_offset[0], mouse_pos[1] - self.drag_offset[1])
+                        self.rect.topleft = self.pos
+                    else:
+                        self.is_dragging = False
+                        Window.focused_window = None  # Release focus when dragging stops
+                elif pygame.Rect(self.pos[0], self.pos[1], self.size[0], self.header_height).collidepoint(mouse_pos) and mouse_click:
+                    self.is_dragging = True
+                    self.drag_offset = (mouse_pos[0] - self.pos[0], mouse_pos[1] - self.pos[1])
 
-        # Handle dragging
-        if self.is_dragging:
-            if mouse_click:
-                self.pos = (mouse_pos[0] - self.drag_offset[0], mouse_pos[1] - self.drag_offset[1])
-                self.rect.topleft = self.pos
-            else:
-                self.is_dragging = False
-        elif pygame.Rect(self.pos[0], self.pos[1], self.size[0], self.header_height).collidepoint(mouse_pos) and mouse_click:
-            self.is_dragging = True
-            self.drag_offset = (mouse_pos[0] - self.pos[0], mouse_pos[1] - self.pos[1])
+        # Draw the window (but only allow interaction if it's the focused window)
+        pygame.draw.rect(screen, self.backround_color, self.rect)
+        pygame.draw.rect(screen, self.title_color, (self.pos[0], self.pos[1], self.size[0], self.header_height))
 
-        # Draw window background
-        pygame.draw.rect(screen, (50, 50, 50), self.rect)
-        # Draw window header
-        pygame.draw.rect(screen, (70, 70, 70), (self.pos[0], self.pos[1], self.size[0], self.header_height))
         # Draw title text
         font = pygame.font.SysFont(None, 24)
-        title_surf = font.render(self.title, True, (255, 255, 255))
+        title_surf = font.render(self.title, True, self.title_text_color)
         screen.blit(title_surf, (self.pos[0] + 5, self.pos[1] + 5))
 
     def move_element(self, element):
-        """Move the element according to the window's position."""
-        element.rect.topleft = (self.pos[0] + element.pos[0], self.pos[1] + element.pos[1])
-        
+        """Move the element according to the window's position, only if this window is focused."""
+        if Window.focused_window == self or not Window.focused_window:
+            element.rect.topleft = (self.pos[0] + element.pos[0], self.pos[1] + element.pos[1])
 
-    def call(self, screen, elements):
+    def call(self, screen):
         """Draw the window and all contained elements."""
-        self.draw(screen)
-        for element in elements:
+        self.draw(screen)  # Draw the window itself
+        # Always draw all elements inside the window
+        for element in self.elements:
             self.move_element(element)
             element.call(screen)
+            #print(element.type, self.id)
+
+
 
 
 class Label:
-    def __init__(self, text, pos, font_size=24, color=(255, 255, 255)):
+    def __init__(self, text, pos, font_size=24, color_name="default", ):
         self.text = text  # The label text
         self.pos = pos  # The position of the label (relative to the window)
         self.font_size = font_size  # Font size
-        self.color = color  # Text color
+        self.color = colors['label_colors'].get(color_name, (255,255,255))
 
         # Create a font object
         self.font = pygame.font.SysFont(None, self.font_size)
 
         # Create a rect based on the label's position and text size
         self.rect = self.font.render(self.text, True, self.color).get_rect(topleft=self.pos)
+        
+        self.type = Label
 
     def call(self, screen):
         """Render and draw the label text."""
         text_surface = self.font.render(self.text, True, self.color)
         screen.blit(text_surface, self.rect.topleft)  # Draw the label using the rect position
 
+if __name__ == "__main__":
+    print("[pygui] Import this file into your project to use, dont run directly")
+else:
+    print("[pygui] Py-GUI 0.4.1")
