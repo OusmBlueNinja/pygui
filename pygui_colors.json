@@ -1,18 +1,35 @@
 {
+    "meta":{    
+        "name":"Orange and Black", 
+        "description":"Orange and Black theme for PyGUI",
+        "version":1.0,
+        "link":"https://github.com/OusmBlueNinja/pygui"
+    },
     "label_colors": {
-        "default": [255, 255, 255],
-        "header": [70, 70, 70],
-        "highlight": [255, 0, 0],
-        "background": [50, 50, 50],
-        "button_hover": [100, 100, 100]
+        "default": [240, 240, 240], 
+        "header": [50, 50, 50],     
+        "highlight": [0, 123, 255], 
+        "background": [40, 40, 40], 
+        "button_hover": [80, 80, 80]
     },
     "gui_color": {
-        "background":[70,70,70],
-        "title": [100,100,100],
-        "title_text":[255,255,255]
+        "background": [30, 30, 30],  
+        "title": [45, 45, 45],       
+        "title_text": [255, 255, 255] 
     },
     "slider_color": {
-        "background":[50,200,50],
-        "knob_color": [255,255,255]
+        "background": [100, 100, 100],
+        "knob_color": [255, 165, 0]    
+    },
+    "button_colors": {
+        "default": [70, 70, 70],       
+        "hover": [90, 90, 90],         
+        "active": [0, 123, 255],       
+        "text": [255, 255, 255]        
+    },
+    "checkbox_colors": {
+        "box": [100, 100, 100],       
+        "checkmark": [0, 255, 0],     
+        "hover": [80, 80, 80]          
     }
 }

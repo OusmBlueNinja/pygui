@@ -7,8 +7,16 @@ def _load_colors(file_path='pygui_colors.json'):
     if not os.path.exists(file_path):
         print(f"[pygui] Color configuration file '{file_path}' not found.")
     else:
+        print(f"[pygui] Loading Color Config '{file_path}'")
         with open(file_path, 'r') as file:
             colors = json.load(file)
+            
+        print(f"[pygui] Color config Data:")
+        print(f"   name: {colors['meta'].get('name', 'N/A')}")
+        print(f"   description: {colors['meta'].get('description','N/A')}")
+        print(f"   version: {colors['meta'].get('version','N/A')}")
+        print(f"   link: {colors['meta'].get('link','N/A')}")
+        
     return colors
 
 # Load the colors at the start of the program
@@ -245,13 +253,15 @@ class Knob:
         self.dragging = False  # Track if the knob is being dragged
         self.last_mouse_y = None  # To track the previous mouse y-position
         self.type = Knob
+        
+        self.angle_offset = -(self.min_angle + self.max_angle) / 2
 
     def call(self, screen):
         """Draw the knob and handle rotation."""
-        # Get the current mouse position and mouse click status
+    # Get the current mouse position and mouse click status
         mouse_pos = pygame.mouse.get_pos()
         mouse_click = pygame.mouse.get_pressed()[0]
-
+    
         # Check if the knob is clicked (or already being dragged)
         if self.dragging:
             if not mouse_click:  # Stop dragging if mouse is released
@@ -261,31 +271,36 @@ class Knob:
                 if self.last_mouse_y is not None:
                     mouse_y_delta = mouse_pos[1] - self.last_mouse_y
                     self.angle -= mouse_y_delta * self.sensitivity  # Rotate angle based on vertical mouse movement
-
+    
                 # Ensure the angle is clamped between min_angle and max_angle
                 self.angle = max(self.min_angle, min(self.angle, self.max_angle))
-
+    
             self.last_mouse_y = mouse_pos[1]  # Update the last Y position of the mouse
-
+    
         # Check for initial click to start dragging
         elif self.rect.collidepoint(mouse_pos) and mouse_click:
             self.dragging = True
             self.last_mouse_y = mouse_pos[1]  # Start dragging, save the initial mouse Y position
-
+    
         # Draw the knob (as a circle)
         pygame.draw.circle(screen, (255, 255, 255), self.rect.center, self.radius, 2)
-
-        # Draw the rect around the knob for debugging purposes
-        #pygame.draw.rect(screen, (0, 255, 255), self.rect, 1)
-
-        # Draw a "needle" to indicate the current angle
+    
+        # Adjust the needle angle so it starts facing up (90 degrees) and rotates left or right.
+        visual_angle = self.angle - 90  # Subtract 90 degrees to make it face up
+    
+        # Convert visual angle to radians for calculation
         needle_length = self.radius - 10
-        needle_angle_rad = math.radians(self.angle)
+        needle_angle_rad = math.radians(visual_angle+self.angle_offset)
+    
+        # Calculate needle's end position based on the adjusted angle
         needle_x = self.rect.center[0] + needle_length * math.cos(needle_angle_rad)
-        needle_y = self.rect.center[1] - needle_length * math.sin(needle_angle_rad)
+        needle_y = self.rect.center[1] + needle_length * math.sin(needle_angle_rad)
+    
+        # Draw the "needle" to indicate the current angle
         pygame.draw.line(screen, (255, 0, 0), self.rect.center, (needle_x, needle_y), 3)
-
-        return self.angle
+    
+        return self.angle  # Return the unmodified angle for internal logic
+    
 
     def move(self, new_pos):
         """Move the knob to a new position."""
