@@ -1,4 +1,4 @@
-# **PyGUI** - Simple, Extensible Python GUI for Pygame ![Pygame](https://img.shields.io/badge/Pygame-2.0-green?style=flat-square&logo=python&logoColor=white)
+# **PyGUI** - Simple, Extensible Python GUI for Pygame ![Pygame](https://img.shields.io/badge/Pygame-ce-green?style=flat-square&logo=python&logoColor=white)
 
 ![GitHub repo size](https://img.shields.io/github/repo-size/ousmblueninja/pygui?color=blue&style=flat-square)
 ![GitHub stars](https://img.shields.io/github/stars/ousmblueninja/pygui?style=flat-square)
