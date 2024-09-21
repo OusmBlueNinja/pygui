@@ -12,42 +12,45 @@ def _load_colors(file_path='pygui_colors.json'):
             colors = json.load(file)
             
         print(f"[pygui] Color config Data:")
-        print(f"   name: {colors['meta'].get('name', 'N/A')}")
-        print(f"   description: {colors['meta'].get('description','N/A')}")
-        print(f"   version: {colors['meta'].get('version','N/A')}")
-        print(f"   link: {colors['meta'].get('link','N/A')}")
+        print(f"[pygui]    name: {colors['meta'].get('name', 'N/A')}")
+        print(f"[pygui]    description: {colors['meta'].get('description','N/A')}")
+        print(f"[pygui]    version: {colors['meta'].get('version','N/A')}")
+        print(f"[pygui]    link: {colors['meta'].get('link','N/A')}")
         
     return colors
 
 # Load the colors at the start of the program
 color = {"label_colors":{},"gui_color":{}, "slider_color":{}} # Default colors
 
-def init_pygui():
+def init(file_path='pygui_colors.json'):
     """Initialize Pygame."""
     global windowsId, colors
-    
-    colors = _load_colors()
+    print("[pygui] Welcome to PyGUI!")
+    colors = _load_colors(file_path=file_path)
     
     windowsId = 0
     pygame.init()
 
-def quit_pygui():
+def quit():
     """Quit Pygame."""
     pygame.quit()
 
 class Button:
-    def __init__(self, text, pos, size):
+    def __init__(self, text:str, pos:tuple[int,int], size:tuple[int,int]):
+        
+        if type(text) != str and type(pos) != tuple and type(size) != tuple:
+            print(f"[pygui] Invalid Cunstructor Values 'Button' '{text}'")
         self.text = text
         self.pos = pos
         self.size = size
-        self.rect = pygame.Rect(pos, size)
+        self.rect = pygame.Rect(pos[0], pos[1], size[0], size[1])
+
         self.is_clicked = False
         self.mouse_released = True  # Track mouse state internally
         self.type = Button
 
-    def call(self, screen):
+    def call(self, screen, mouse_pos=(0,0)):
         """Draw the button and check if it's clicked."""
-        mouse_pos = pygame.mouse.get_pos()
         mouse_click = pygame.mouse.get_pressed()[0]
 
         # Colors
@@ -92,9 +95,8 @@ class Checkbox:
         
         self.type = Checkbox
 
-    def call(self, screen):
+    def call(self, screen, mouse_pos=(0,0)):
         """Draw the checkbox and toggle its state if clicked."""
-        mouse_pos = pygame.mouse.get_pos()
         mouse_click = pygame.mouse.get_pressed()[0]
 
         # Handle toggle only on mouse click
@@ -129,7 +131,7 @@ class TextInput:
         self.text = initial_text
         self.is_active = False
 
-    def call(self, screen, event_list):
+    def call(self, screen, event_list, mouse_pos=(0,0)):
         """Draw the text input field and handle typing when active."""
         base_color = (255, 255, 255)
         active_color = (230, 230, 255)
@@ -140,7 +142,6 @@ class TextInput:
         pygame.draw.rect(screen, (0, 0, 0), self.rect, 2)
 
         # Handle clicking to activate/deactivate input
-        mouse_pos = pygame.mouse.get_pos()
         if pygame.mouse.get_pressed()[0] and self.rect.collidepoint(mouse_pos):
             self.is_active = True
         elif pygame.mouse.get_pressed()[0] and not self.rect.collidepoint(mouse_pos):
@@ -192,9 +193,8 @@ class Slider:
         knob_x = int(self.rect.x + ((self.value - self.min_value) / (self.max_value - self.min_value)) * (self.rect.width - self.knob_width))
         self.knob_rect.x = knob_x  # Set the knob's x position
 
-    def call(self, screen):
+    def call(self, screen, mouse_pos=(0,0)):
         """Draw the slider and handle user interaction."""
-        mouse_pos = pygame.mouse.get_pos()  # Get the current mouse position
         mouse_click = pygame.mouse.get_pressed()[0]  # Check if the mouse button is pressed
         
         # Draw the slider track
@@ -256,10 +256,9 @@ class Knob:
         
         self.angle_offset = -(self.min_angle + self.max_angle) / 2
 
-    def call(self, screen):
+    def call(self, screen, mouse_pos=(0,0)):
         """Draw the knob and handle rotation."""
     # Get the current mouse position and mouse click status
-        mouse_pos = pygame.mouse.get_pos()
         mouse_click = pygame.mouse.get_pressed()[0]
     
         # Check if the knob is clicked (or already being dragged)
@@ -340,9 +339,8 @@ class Window:
         self.backround_color = colors['gui_color'].get("background", (70,70,70))
         self.title_color = colors['gui_color'].get("title", (100,100,100))
 
-    def draw(self, screen):
+    def draw(self, screen, mouse_pos=(0,0)):
         """Draw the window and allow it to be dragged."""
-        mouse_pos = pygame.mouse.get_pos()
         mouse_click = pygame.mouse.get_pressed()[0]
         
         
@@ -378,13 +376,13 @@ class Window:
         if Window.focused_window == self or not Window.focused_window:
             element.rect.topleft = (self.pos[0] + element.pos[0], self.pos[1] + element.pos[1])
 
-    def call(self, screen):
+    def call(self, screen, mouse_pos=(0,0)):
         """Draw the window and all contained elements."""
-        self.draw(screen)  # Draw the window itself
+        self.draw(screen, mouse_pos)  # Draw the window itself
         # Always draw all elements inside the window
         for element in self.elements:
             self.move_element(element)
-            element.call(screen)
+            element.call(screen, mouse_pos)
             #print(element.type, self.id)
 
 
@@ -405,7 +403,7 @@ class Label:
         
         self.type = Label
 
-    def call(self, screen):
+    def call(self, screen, *mouse_pos):
         """Render and draw the label text."""
         text_surface = self.font.render(self.text, True, self.color)
         screen.blit(text_surface, self.rect.topleft)  # Draw the label using the rect position
