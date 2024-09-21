@@ -180,33 +180,38 @@ Here’s an example of how you can combine these elements into a basic GUI:
 
 ```python
 import pygame
-import pygui
+from pygui import pygui
 
-# Initialize Pygame and PyGUI
-pygui.init_pygui()
-pygame.init()
+
+
+# Initialize PyGUI and Pygame
+pygui.init("./pygui/pygui_colors.json")
+
 
 # Create screen
 screen = pygame.display.set_mode((800, 600))
 
 # Create GUI elements
-button = pygui.Button("Click Me", (100, 100), (200, 50))
-slider = pygui.Slider((100, 200), (200, 20), min_value=0, max_value=10, start_value=5)
-checkbox = pygui.Checkbox("Enable Feature", (100, 250), checked=True)
-label = pygui.Label("This is a label", (100, 50))
-window = pygui.Window("Control Window", (400, 100), (300, 400), elements=[button, slider, checkbox, label])
+button = pygui.Button("Click Me", (25, 130), (200, 50))
+slider = pygui.Slider((25, 200), (200, 20), min_value=0, max_value=10, start_value=5)
+checkbox = pygui.Checkbox("Enable Feature", (25, 250), checked=True)
+label = pygui.Label("This is a label", (10, 40))
+knob = pygui.Knob((60,80), 20, 0, 365, 250, 0.5)
+knob2 = pygui.Knob((120,80), 20, 0, 365, 250, 0.5)
+
+window = pygui.Window("Control Window", (400, 100), (250, 300), elements=[button, slider, checkbox, label, knob, knob2])
 
 # Main loop
 running = True
 while running:
-    screen.fill((30, 30, 30))  # Clear the screen with a dark color
+    screen.fill((60,60,60))  # Clear the screen with a dark color
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
     # Call the window and its elements
-    window.call(screen)
+    window.call(screen, pygame.mouse.get_pos())
 
     # Update display
     pygame.display.flip()
