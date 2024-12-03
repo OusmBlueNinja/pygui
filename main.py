@@ -3,7 +3,7 @@ import pygame
 import pygui
 
 # Initialize Pygame and pygui
-pygui.init_pygui()
+pygui.init()
 
 WIDTH, HEIGHT = 1280, 720
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
